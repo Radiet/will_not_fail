@@ -69,7 +69,7 @@ $(document).ready(function() {
   iso.place(0,0.5,2, backMan);
   backMan.attr('y', man.attr('y')-32).attr('x', man.attr('x')-65).attr('z', 10000)
 
-  var rightMan = Crafty.e("2D, DOM, hoodR, Mouse")
+  var leftMan = Crafty.e("2D, DOM, hoodR, Mouse")
     .bind("click", function(e) {
         if(e.button === 0){
           moveToFront('right', spriteMan)
@@ -78,10 +78,10 @@ $(document).ready(function() {
         }
       })
 
-  iso.place(0,0.5,2, rightMan);
-  rightMan.attr('y', man.attr('y')-32).attr('x', man.attr('x')+65).attr('z', 10000)
+  iso.place(0,0.5,2, leftMan);
+  leftMan.attr('y', man.attr('y')-32).attr('x', man.attr('x')+65).attr('z', 9000)
 
-  var leftMan = Crafty.e("2D, DOM, hoodL, Mouse")
+  var rightMan = Crafty.e("2D, DOM, hoodL, Mouse")
     .bind("click", function(e) {
         if(e.button === 0){
           moveToFront('left', spriteMan)
@@ -90,10 +90,10 @@ $(document).ready(function() {
         }
       })
 
-  iso.place(0,0.5,2, leftMan);
-  leftMan.attr('y', man.attr('y')+32).attr('x', man.attr('x')-65).attr('z', 10000)
+  iso.place(0,0.5,2, rightMan);
+  rightMan.attr('y', man.attr('y')+32).attr('x', man.attr('x')-65).attr('z', 10000)
 
-  var spriteMan = [man, frontMan, backMan, leftMan, rightMan]
+  var spriteMan = [leftMan, man, frontMan, backMan, rightMan]
 
   function moveToFront(direction, element){
     switch(direction){
@@ -115,10 +115,10 @@ $(document).ready(function() {
         break
     }
 
-    element.forEach(function(elem){
+    element.forEach(function(elem, i){
       var y = elem.attr('y') + incY
       var x = elem.attr('x') + incX
-      elem.attr('y', y).attr('x', x).attr('z', 10000)
+      elem.attr('y', y).attr('x', x).attr('z', 10000+ i)
     })
   }
 
