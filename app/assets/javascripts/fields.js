@@ -4,6 +4,9 @@ $(document).ready(function() {
     grass: [0,0,1,1],
     stone: [1,0,1,1]
   });
+  Crafty.sprite(90, "hood.png", {
+    hood: [7,0,0,1.5]
+  });
 
   iso = Crafty.isometric.init(128);
   var z = 0;
@@ -16,8 +19,10 @@ $(document).ready(function() {
         if(e.button === 2) this.destroy();
       }).bind("mouseover", function() {
         if(this.has("grass")) {
+          console.log(this)
           this.sprite(0,1,1,1);
         } else {
+          console.log(this)
           this.sprite(1,1,1,1);
         }
       }).bind("mouseout", function() {
@@ -32,6 +37,12 @@ $(document).ready(function() {
     }
   }
 
+  var tile = Crafty.e("2D, DOM, hood, Mouse").bind("mouseover", function() {
+      this.sprite(4,0,0,1.5);
+  }).bind("mouseout", function() {
+      this.sprite(7,0,0,1.5);
+  });
+  iso.place(0,0.5,2, tile);
   Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e) {
     if(e.button > 1) return;
     var base = {x: e.clientX, y: e.clientY};
