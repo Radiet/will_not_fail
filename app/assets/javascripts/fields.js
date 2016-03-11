@@ -90,7 +90,7 @@ $(document).ready(function() {
       case 'right':
         incY = -32
         element.sprite(5,0,0,1.5);
-        incX = 65
+        incX = 64
         break
     }
 
@@ -100,16 +100,15 @@ $(document).ready(function() {
   }
 
   function getDirection(y, x) {
-    window.fromY = currentChar.attr('y') + 90
-    window.fromX = currentChar.attr('x') - 35
+    var fromY = currentChar.attr('y') + 90
+    var fromX = currentChar.attr('x') - 35
+
     if(fromY>y && fromX<x) moveTo('right', currentChar)
     else if(fromY<y && fromX>x) moveTo('left', currentChar)
     else if(fromY>y && fromX>x) moveTo('back', currentChar)
+    else if(fromY==y && fromX==x) ;
+    else if(fromY==y && fromX>x)  moveTo('back', currentChar)
     else moveTo('front', currentChar)
-    // 352 704
-    // 320 640
-    // 230 675
-    // 90  35
   }
 
   Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e) {
