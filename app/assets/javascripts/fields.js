@@ -52,13 +52,23 @@ $(document).ready(function() {
                 if(e.button === 0){
                   charSelected = true
                   currentChar = this
+                  console.log(this.attr('y'), this.attr('x'))
                 }
               })
               .bind("mouseover", function() {
                   console.log(this.attr('y'), this.attr('x'))
               })
+  var man2 = Crafty.e("2D, DOM, hoodF, Mouse")
+              .bind("click", function(e) {
+                if(e.button === 0){
+                  charSelected = true
+                  currentChar = this
+                  console.log(this.attr('y'), this.attr('x'))
+                }
+              })
   iso.place(0,0.5,2, man);
   man.attr('y', 230).attr('x', 675).attr('z', 10000)
+  man2.attr('y', 134).attr('x', 742).attr('z', 10000)
 
   function moveTo(direction, element){
     switch(direction){
@@ -92,10 +102,10 @@ $(document).ready(function() {
   function getDirection(y, x) {
     window.fromY = currentChar.attr('y') + 90
     window.fromX = currentChar.attr('x') - 35
-    if(fromY<y && fromX<x) moveTo('front', currentChar)
     if(fromY>y && fromX<x) moveTo('right', currentChar)
-    if(fromY<y && fromX>x) moveTo('left', currentChar)
-    if(fromY>y && fromX>x) moveTo('back', currentChar)
+    else if(fromY<y && fromX>x) moveTo('left', currentChar)
+    else if(fromY>y && fromX>x) moveTo('back', currentChar)
+    else moveTo('front', currentChar)
     // 352 704
     // 320 640
     // 230 675
