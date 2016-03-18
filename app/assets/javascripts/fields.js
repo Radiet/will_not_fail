@@ -16,15 +16,27 @@ $(document).ready(function() {
     hoodEneL: [1,0,0,1.5],
     hoodEneR: [5,0,0,1.5]
   });
+  Crafty.sprite(90, "hood_end.png", {
+    hoodEndF: [7,0,0,1.5],
+    hoodEndB: [3,0,0,1.5],
+    hoodEndL: [1,0,0,1.5],
+    hoodEndR: [5,0,0,1.5]
+  });
 
   iso = Crafty.isometric.init(128);
 
   var z = 0;
   var charSelected = false
-  var currentChar
+  window.currentChar
   var pretentTpMove = false
   var borderedField = []
   var fields = []
+  var contestant = ['player', 'enemy']
+  var base = {
+    player: {},
+    enemy: {},
+    turn: contestant[0]
+  }
 
   for(var i = 12; i >= 0; i--) {
     for(var y = 0; y < 30; y++) {
@@ -40,10 +52,10 @@ $(document).ready(function() {
           tileClick(e, this)
         })
         .bind("mouseover", function() {
-          // addBorder(this)
+          addBorder(this)
         })
         .bind("mouseout", function() {
-          // removeBorder(this)
+          removeBorder(this)
         });
 
       iso.place(i,y,0, tile);
@@ -54,8 +66,9 @@ $(document).ready(function() {
     }
   }
 
-  var man0   = Crafty.e("2D, DOM, hoodR, Mouse")
+  window.man0   = Crafty.e("2D, DOM, hoodR, Mouse")
               .bind("click", function(e){ charClick(e, this) })
+
   var man1   = Crafty.e("2D, DOM, hoodR, Mouse")
               .bind("click", function(e){ charClick(e, this) })
 
@@ -66,6 +79,24 @@ $(document).ready(function() {
   var ene2  = Crafty.e("2D, DOM, hoodEneL, Mouse")
               .bind("click", function(e){ charClick(e, this) })
 
+  man0.legion = contestant[0]
+  man1.legion = contestant[0]
+  ene0.legion = contestant[1]
+  ene1.legion = contestant[1]
+  ene2.legion = contestant[1]
+
+  man0.played = false
+  man1.played = false
+  ene0.played = false
+  ene1.played = false
+  ene2.played = false
+
+  man0.lastDirection = false
+  man1.lastDirection = false
+  ene0.lastDirection = false
+  ene1.lastDirection = false
+  ene2.lastDirection = false
+
   man0.attr('y', 774).attr('x', 227).attr('z', 100+774)
   man1.attr('y', 710).attr('x', 227).attr('z', 100+710)
 
@@ -73,32 +104,51 @@ $(document).ready(function() {
   ene1.attr('y', 6).attr('x', 1251).attr('z', 100+6)
   ene2.attr('y', 134).attr('x', 1379).attr('z', 100+134)
 
+
+  base.player = {
+    units: [man0, man1],
+    image: 'hood.png'
+  }
+
+  base.enemy = {
+    units: [ene0, ene1, ene2],
+    image: 'hood_ene.png'
+  }
+
+
   function moveTo(direction, element){
     var y   = element.attr('y')
     var x   = element.attr('x')
     var pos = getPosition(direction, y, x)
-
+    var canMove   = true;
+    currentField  = fields[pos['y']+90][pos['x']-35]
+    if (currentField.pretentTpMove == false) { canMove = false }
     changeSpriteDirection(direction, element)
 
-    element.attr('y', pos['y']).attr('x', pos['x']).attr('z', 10000)
+    element.attr('y', pos['y']).attr('x', pos['x']).attr('z', 100+pos['y'] )
+    currentChar.lastDirection = direction
+
+    return canMove
   }
 
   function getDirection(y, x) {
       var fromY = currentChar.attr('y') + 90
       var fromX = currentChar.attr('x') - 35
-
-      while(true){
-        if (fromY>y && fromX<x) moveTo('right', currentChar)
-        else if (fromY<y && fromX>x) moveTo('left', currentChar)
-        else if (fromY>y && fromX>x) moveTo('back', currentChar)
-        else if (fromY==y && fromX>x)  moveTo('back', currentChar)
-        else if (fromY>y && fromX==x)  moveTo('back', currentChar)
+      var canMove = true
+      while(canMove){
+        if (fromY>y && fromX<x) canMove = moveTo('right', currentChar)
+        else if (fromY<y && fromX>x) canMove = moveTo('left', currentChar)
+        else if (fromY>y && fromX>x) canMove = moveTo('back', currentChar)
+        else if (fromY==y && fromX>x)  canMove = moveTo('back', currentChar)
+        else if (fromY>y && fromX==x)  canMove = moveTo('back', currentChar)
         else if (fromY==y && fromX==x) break
-        else moveTo('front', currentChar)
+        else canMove = moveTo('front', currentChar)
         fromY = currentChar.attr('y') + 90
         fromX = currentChar.attr('x') - 35
       }
 
+    currentChar.played = true
+    currentChar.__image = "hood_end.png";
   }
 
   function changeSpriteDirection (direction, element) {
@@ -247,6 +297,7 @@ $(document).ready(function() {
         charSelected  = true
         currentChar   = element
         console.log(element.attr('y'), element.attr('x'))
+        cleanBorder()
 
         getBorderSight(element)
       }
@@ -254,19 +305,77 @@ $(document).ready(function() {
 
     function tileClick (e, element) {
       if (e.button === 0) {
-        addBorder(element)
         console.log(element.attr('y'), element.attr('x'), element.attr('z'))
-        if (charSelected) {
-          if (element.pretentTpMove == true) {
-            getDirection(element.attr('y'), element.attr('x'))
-          } else {
-            charSelected = false
-          }
+
+        if (!charSelected ) { return; }
+        if (currentChar.legion!='player' || currentChar.played || currentChar.legion!=base.turn) {
           cleanBorder()
+          return;
         }
-      }else{
-        removeBorder(element)
+
+        if (element.pretentTpMove == true) {
+          getDirection(element.attr('y'), element.attr('x'))
+
+          var availableMove = checkForEndTurn()
+          if (!availableMove) {
+            changeTurn()
+          }
+
+        } else {
+          charSelected = false
+        }
+        cleanBorder()
       }
+
+    }
+
+    function checkForEndTurn () {
+      var currentTurn   = base.turn;
+      var availableMove = false;
+
+      base[currentTurn].units.forEach(function(e){
+        if (e.played == false) { availableMove=true }
+      })
+
+      return availableMove;
+    }
+
+    function whiteListUnits () {
+      base[base.turn].units.forEach(function(unit){
+        unit.__image = base[base.turn].image;
+        unit.played  = false;
+        changeSpriteDirection(unit.lastDirection, unit)
+      })
+    }
+
+    function changeTurn () {
+
+      whiteListUnits()
+      nextContestant  = contestant.indexOf(base.turn) + 1
+      if (contestant[nextContestant] == undefined)
+        nextContestant = 0
+      base.turn       = contestant[nextContestant]
+      if (base.turn != 'player')
+        enemyMove()
+    }
+
+    function enemyMove () {
+      console.log('move')
+      var currentTurn = base.turn
+      var target    = base.player.units[0];
+      var target_y  = target.attr('y') + 90
+      var target_x  = target.attr('x') - 35
+
+      base[currentTurn].units.forEach(function(unit){
+        currentChar = unit
+        getDirection(target_y, target_x)
+      })
+
+      var availableMove = checkForEndTurn()
+      if (!availableMove) {
+        changeTurn()
+      }
+
     }
 
   Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e) {
