@@ -10,6 +10,12 @@ $(document).ready(function() {
     hoodL: [1,0,0,1.5],
     hoodR: [5,0,0,1.5]
   });
+  Crafty.sprite(90, "hood_ene.png", {
+    hoodEneF: [7,0,0,1.5],
+    hoodEneB: [3,0,0,1.5],
+    hoodEneL: [1,0,0,1.5],
+    hoodEneR: [5,0,0,1.5]
+  });
 
   iso = Crafty.isometric.init(128);
 
@@ -28,14 +34,16 @@ $(document).ready(function() {
       if ((i==0 || i==12) && which) { continue; }
 
       var tile = Crafty.e("2D, DOM, "+ (!which ? "grass" : "grass") +", Mouse")
-        .attr('z',i+1 * y+1).areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32]).bind("click", function(e) {
+        .attr('z',i+1 * y+1)
+        .areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32])
+        .bind("click", function(e) {
           tileClick(e, this)
         })
         .bind("mouseover", function() {
-          addBorder(this)
+          // addBorder(this)
         })
         .bind("mouseout", function() {
-          removeBorder(this)
+          // removeBorder(this)
         });
 
       iso.place(i,y,0, tile);
@@ -46,14 +54,24 @@ $(document).ready(function() {
     }
   }
 
-  var man   = Crafty.e("2D, DOM, hoodF, Mouse")
+  var man0   = Crafty.e("2D, DOM, hoodR, Mouse")
               .bind("click", function(e){ charClick(e, this) })
-  var man2  = Crafty.e("2D, DOM, hoodF, Mouse")
+  var man1   = Crafty.e("2D, DOM, hoodR, Mouse")
               .bind("click", function(e){ charClick(e, this) })
 
-  iso.place(0,0.5,2, man);
-  man.attr('y', 230).attr('x', 675).attr('z', 10000)
-  man2.attr('y', 134).attr('x', 739).attr('z', 10000)
+  var ene0  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("click", function(e){ charClick(e, this) })
+  var ene1  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("click", function(e){ charClick(e, this) })
+  var ene2  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("click", function(e){ charClick(e, this) })
+
+  man0.attr('y', 774).attr('x', 227).attr('z', 100+774)
+  man1.attr('y', 710).attr('x', 227).attr('z', 100+710)
+
+  ene0.attr('y', 6).attr('x', 1379).attr('z', 100+6)
+  ene1.attr('y', 6).attr('x', 1251).attr('z', 100+6)
+  ene2.attr('y', 134).attr('x', 1379).attr('z', 100+134)
 
   function moveTo(direction, element){
     var y   = element.attr('y')
@@ -157,7 +175,7 @@ $(document).ready(function() {
       for( var i =0; i<e[1]; i++){
 
         var pos = getPosition(e[0], y, x)
-        if(fields[pos['y']] === undefined || fields[pos['x']] === undefined) { continue; }
+        if(fields[pos['y']] === undefined || fields[pos['y']][pos['x']] === undefined) { continue; }
 
         var field = fields[pos['y']][pos['x']]
         addBorder(field, 'move')
@@ -236,6 +254,7 @@ $(document).ready(function() {
 
     function tileClick (e, element) {
       if (e.button === 0) {
+        addBorder(element)
         console.log(element.attr('y'), element.attr('x'), element.attr('z'))
         if (charSelected) {
           if (element.pretentTpMove == true) {
@@ -245,6 +264,8 @@ $(document).ready(function() {
           }
           cleanBorder()
         }
+      }else{
+        removeBorder(element)
       }
     }
 
