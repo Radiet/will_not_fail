@@ -17,99 +17,73 @@ $(document).ready(function() {
   var charSelected = false
   var currentChar
   var pretentTpMove = false
-  window.borderedField = []
-  window.fields = []
+  var borderedField = []
+  var fields = []
 
-  for(var i = 20; i >= 0; i--) {
-    for(var y = 0; y < 20; y++) {
+  for(var i = 12; i >= 0; i--) {
+    for(var y = 0; y < 30; y++) {
+
       var which = Crafty.randRange(0,1);
+
+      if ((i==0 || i==12) && which) { continue; }
+
       var tile = Crafty.e("2D, DOM, "+ (!which ? "grass" : "grass") +", Mouse")
-      .attr('z',i+1 * y+1).areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32]).bind("click", function(e) {
-        //destroy on right click
-        if(e.button === 0){
-          console.log(this.attr('y'), this.attr('x'), this.attr('z'))
-          if(charSelected){
-            console.log('a')
-            if(this.pretentTpMove == true){
-              getDirection(this.attr('y'), this.attr('x'))
-            }else{
-              charSelected = false
-            }
-            borderedField.forEach(function(e){
-              removeBorder(e, 'move')
-            })
-            // charSelected = false;
-          }
-        }
-      }).bind("mouseover", function() {
-        addBorder(this)
-      }).bind("mouseout", function() {
-        removeBorder(this)
-      });
+        .attr('z',i+1 * y+1).areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32]).bind("click", function(e) {
+          tileClick(e, this)
+        })
+        .bind("mouseover", function() {
+          addBorder(this)
+        })
+        .bind("mouseout", function() {
+          removeBorder(this)
+        });
+
       iso.place(i,y,0, tile);
-      if(fields[tile.attr('y')] == undefined)
-        fields[tile.attr('y')] = []
-      fields[tile.attr('y')][tile.attr('x')] = tile
       tile.pretentTpMove = false
+
+      if(fields[tile.attr('y')] == undefined) { fields[tile.attr('y')] = [] }
+      fields[tile.attr('y')][tile.attr('x')] = tile
     }
   }
 
-  function addBorder (tile, move){
-    if(tile.has("grass")) {
-      tile.sprite(0,1,1,1);
-    } else {
-      tile.sprite(1,1,1,1);
-    }
-    if (move != undefined) {
-      tile.pretentTpMove=true
-    }
-  }
-  function removeBorder (tile, move){
+  var man   = Crafty.e("2D, DOM, hoodF, Mouse")
+              .bind("click", function(e){ charClick(e, this) })
+  var man2  = Crafty.e("2D, DOM, hoodF, Mouse")
+              .bind("click", function(e){ charClick(e, this) })
 
-    if (move != undefined) {
-      tile.pretentTpMove=false
-    }
-    if(tile.pretentTpMove != true){
-      if(tile.has("grass")) {
-        tile.sprite(0,0,1,1);
-      } else {
-        tile.sprite(1,0,1,1);
-      }
-    }
-  }
-
-  window.man = Crafty.e("2D, DOM, hoodF, Mouse")
-              .bind("click", function(e) {
-                if(e.button === 0){
-                  charSelected = true
-                  currentChar = this
-                  var cur_x = this.attr('x') - 35
-                  var cur_y = this.attr('y') + 90
-                  borderRange(cur_y, cur_x)
-                  console.log(this.attr('y'), this.attr('x'))
-                }
-              })
-
-  var man2 = Crafty.e("2D, DOM, hoodF, Mouse")
-              .bind("click", function(e) {
-                if(e.button === 0){
-                  charSelected = true
-                  currentChar = this
-                  var cur_x = this.attr('x') - 35
-                  var cur_y = this.attr('y') + 90
-                  borderRange(cur_y, cur_x)
-                  console.log(this.attr('y'), this.attr('x'))
-                }
-              })
   iso.place(0,0.5,2, man);
   man.attr('y', 230).attr('x', 675).attr('z', 10000)
   man2.attr('y', 134).attr('x', 739).attr('z', 10000)
 
   function moveTo(direction, element){
-    var y = element.attr('y')
-    var x = element.attr('x')
-    pos = getPosition(direction, y, x)
+    var y   = element.attr('y')
+    var x   = element.attr('x')
+    var pos = getPosition(direction, y, x)
 
+    changeSpriteDirection(direction, element)
+
+    element.attr('y', pos['y']).attr('x', pos['x']).attr('z', 10000)
+  }
+
+  function getDirection(y, x) {
+      var fromY = currentChar.attr('y') + 90
+      var fromX = currentChar.attr('x') - 35
+
+      while(true){
+        if (fromY>y && fromX<x) moveTo('right', currentChar)
+        else if (fromY<y && fromX>x) moveTo('left', currentChar)
+        else if (fromY>y && fromX>x) moveTo('back', currentChar)
+        else if (fromY==y && fromX>x)  moveTo('back', currentChar)
+        else if (fromY>y && fromX==x)  moveTo('back', currentChar)
+        else if (fromY==y && fromX==x) break
+        else moveTo('front', currentChar)
+        fromY = currentChar.attr('y') + 90
+        fromX = currentChar.attr('x') - 35
+      }
+
+  }
+
+  function changeSpriteDirection (direction, element) {
     switch(direction){
       case 'front':
         element.sprite(7,0,0,1.5);
@@ -124,23 +98,6 @@ $(document).ready(function() {
         element.sprite(5,0,0,1.5);
         break
     }
-    element.attr('y', pos['y']).attr('x', pos['x']).attr('z', 10000+ i)
-  }
-
-  function getDirection(y, x) {
-      var fromY = currentChar.attr('y') + 90
-      var fromX = currentChar.attr('x') - 35
-      while(true){
-        if(fromY>y && fromX<x) moveTo('right', currentChar)
-        else if(fromY<y && fromX>x) moveTo('left', currentChar)
-        else if(fromY>y && fromX>x) moveTo('back', currentChar)
-        else if(fromY==y && fromX>x)  moveTo('back', currentChar)
-        else if(fromY>y && fromX==x)  moveTo('back', currentChar)
-        else if(fromY==y && fromX==x) break
-        else moveTo('front', currentChar)
-        fromY = currentChar.attr('y') + 90
-        fromX = currentChar.attr('x') - 35
-      }
   }
 
   function getPosition(direction, y, x){
@@ -183,24 +140,114 @@ $(document).ready(function() {
     return {'y': y, 'x': x}
   }
 
-  function borderRange (cur_y, cur_x){
-    dir = [['front', 2], ['back', 2], ['left', 2], ['right', 2], ['kananbawah', 1], ['kiribawah', 1], ['kananatas', 1], ['kiriatas', 1]]
+  function showBorderRange (cur_y, cur_x){
+    dir = [['front', 2], ['back', 2], ['left', 2], ['right', 2],
+          ['kananbawah', 1], ['kiribawah', 1], ['kananatas', 1], ['kiriatas', 1]]
 
-    dir.forEach(function(e){
-      y = cur_y
-      x = cur_x
+    for (var i = 0; i < dir.length ; i++) {
+      addBorderRange(dir[i], cur_y, cur_x)
+    };
+
+  }
+
+  function addBorderRange (e, cur_y, cur_x) {
+      var y = cur_y
+      var x = cur_x
 
       for( var i =0; i<e[1]; i++){
-        pos =getPosition(e[0], y, x)
-        field = fields[pos['y']][pos['x']]
-        borderedField.push(field)
+
+        var pos = getPosition(e[0], y, x)
+        if(fields[pos['y']] === undefined || fields[pos['x']] === undefined) { continue; }
+
+        var field = fields[pos['y']][pos['x']]
         addBorder(field, 'move')
+        borderedField.push(field)
+
         y = pos['y']
         x = pos['x']
       }
-    })
+    }
 
-  }
+
+    function addBorder (tile, move){
+
+      if (tile === undefined) { return; }
+
+      if (tile.has("grass")) {
+        tile.sprite(0,1,1,1);
+      } else {
+        tile.sprite(1,1,1,1);
+      }
+
+      if (move != undefined) {
+        tile.pretentTpMove=true
+      }
+
+    }
+
+    function removeBorder (tile, move){
+
+      if (tile === undefined) { return; }
+
+      if (move != undefined) {
+        tile.pretentTpMove=false
+      }
+
+      if (tile.pretentTpMove != true){
+        if (tile.has("grass")) {
+          tile.sprite(0,0,1,1);
+        } else {
+          tile.sprite(1,0,1,1);
+        }
+      }
+
+    }
+
+    function cleanBorder () {
+      borderedField.forEach(function(e){
+        removeBorder(e, 'move')
+      })
+    }
+
+    function cancelBorder () {
+      borderedField.forEach(function(e){
+        removeBorder(e)
+      })
+    }
+
+    function getBorderSight (element) {
+      var cur_x = element.attr('x') - 35
+      var cur_y = element.attr('y') + 90
+
+      cleanBorder
+      showBorderRange(cur_y, cur_x)
+    }
+
+    function charClick (event, element) {
+      if(event.button === 0){
+
+        charSelected  = true
+        currentChar   = element
+        console.log(element.attr('y'), element.attr('x'))
+
+        getBorderSight(element)
+      }
+    }
+
+    function tileClick (e, element) {
+      if (e.button === 0) {
+        console.log(element.attr('y'), element.attr('x'), element.attr('z'))
+        if (charSelected) {
+          if (element.pretentTpMove == true) {
+            getDirection(element.attr('y'), element.attr('x'))
+          } else {
+            charSelected = false
+          }
+          cleanBorder()
+        }
+      }
+    }
+
   Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e) {
     if(e.button > 1) return;
     var base = {x: e.clientX, y: e.clientY};
