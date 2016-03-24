@@ -23,11 +23,11 @@ $(document).ready(function() {
     hoodEndR: [5,0,0,1.5]
   });
 
-  iso = Crafty.isometric.init(128);
+  iso = Crafty.isometric.size(128);
 
   var z = 0;
   var charSelected = false
-  window.currentChar
+  var currentChar
   var pretentTpMove = false
   var borderedField = []
   var fields = []
@@ -41,20 +41,20 @@ $(document).ready(function() {
   for(var i = 12; i >= 0; i--) {
     for(var y = 0; y < 30; y++) {
 
-      var which = Crafty.randRange(0,1);
+      var which = Crafty.math.randomInt(0,1);
 
       if ((i==0 || i==12) && which) { continue; }
 
       var tile = Crafty.e("2D, DOM, "+ (!which ? "grass" : "grass") +", Mouse")
         .attr('z',i+1 * y+1)
-        .areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32])
-        .bind("click", function(e) {
+        // .areaMap([64,0],[128,32],[128,96],[64,128],[0,96],[0,32])
+        .bind("Click", function(e) {
           tileClick(e, this)
         })
-        .bind("mouseover", function() {
+        .bind("MouseOver", function() {
           addBorder(this)
         })
-        .bind("mouseout", function() {
+        .bind("MouseOut", function() {
           removeBorder(this)
         });
 
@@ -67,17 +67,17 @@ $(document).ready(function() {
   }
 
   window.man0   = Crafty.e("2D, DOM, hoodR, Mouse")
-              .bind("click", function(e){ charClick(e, this) })
+              .bind("Click", function(e){ charClick(e, this) })
 
-  var man1   = Crafty.e("2D, DOM, hoodR, Mouse")
-              .bind("click", function(e){ charClick(e, this) })
+  window.man1   = Crafty.e("2D, DOM, hoodR, Mouse")
+              .bind("Click", function(e){ charClick(e, this) })
 
-  var ene0  = Crafty.e("2D, DOM, hoodEneL, Mouse")
-              .bind("click", function(e){ charClick(e, this) })
-  var ene1  = Crafty.e("2D, DOM, hoodEneL, Mouse")
-              .bind("click", function(e){ charClick(e, this) })
-  var ene2  = Crafty.e("2D, DOM, hoodEneL, Mouse")
-              .bind("click", function(e){ charClick(e, this) })
+  window.ene0  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("Click", function(e){ charClick(e, this) })
+  window.ene1  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("Click", function(e){ charClick(e, this) })
+  window.ene2  = Crafty.e("2D, DOM, hoodEneL, Mouse")
+              .bind("Click", function(e){ charClick(e, this) })
 
   man0.legion = contestant[0]
   man1.legion = contestant[0]
@@ -97,8 +97,8 @@ $(document).ready(function() {
   ene1.lastDirection = false
   ene2.lastDirection = false
 
-  man0.attr('y', 774).attr('x', 227).attr('z', 100+774)
-  man1.attr('y', 710).attr('x', 227).attr('z', 100+710)
+  man0.attr('y', 262).attr('x', 995).attr('z', 100+774)
+  man1.attr('y', 326).attr('x', 1123).attr('z', 100+710)
 
   ene0.attr('y', 6).attr('x', 1379).attr('z', 100+6)
   ene1.attr('y', 6).attr('x', 1251).attr('z', 100+6)
@@ -126,7 +126,7 @@ $(document).ready(function() {
     changeSpriteDirection(direction, element)
 
     element.attr('y', pos['y']).attr('x', pos['x']).attr('z', 100+pos['y'] )
-    currentChar.lastDirection = direction
+    element.lastDirection = direction
 
     return canMove
   }
@@ -360,23 +360,82 @@ $(document).ready(function() {
     }
 
     function enemyMove () {
-      console.log('move')
       var currentTurn = base.turn
-      var target    = base.player.units[0];
-      var target_y  = target.attr('y') + 90
-      var target_x  = target.attr('x') - 35
-
+      var targets    = [];
+      base.player.units.forEach(function(unit){
+        targets = targets.concat(availableSide(unit))
+      })
       base[currentTurn].units.forEach(function(unit){
+        var target = getNearestFrom(unit, targets);
+        targets.splice(targets.indexOf(target), 1)
+
         currentChar = unit
-        getDirection(target_y, target_x)
+        getDirection(target.y, target.x)
       })
 
       var availableMove = checkForEndTurn()
       if (!availableMove) {
         changeTurn()
       }
-
     }
+
+    function getNearestFrom (unit, targets) {
+      var steps = [];
+      var y = unit.attr('y') + 90
+      var x = unit.attr('x') - 35
+      targets.forEach(function(target){
+        steps.push(stepNeededTo(target.y, target.x, unit))
+        stepNeededTo(y, x, unit)
+      })
+      return targets[steps.indexOf(Math.min.apply(Math, steps))];
+    }
+
+  function stepNeededTo(y, x, unit) {
+      var fromY = unit.attr('y') + 90
+      var fromX = unit.attr('x') - 35
+      var stepCount = 0;
+      while(true){
+        if (fromY>y && fromX<x) moveTo('right', unit)
+        else if (fromY<y && fromX>x) moveTo('left', unit)
+        else if (fromY>y && fromX>x) moveTo('back', unit)
+        else if (fromY==y && fromX>x)  moveTo('back', unit)
+        else if (fromY>y && fromX==x)  moveTo('back', unit)
+        else if (fromY==y && fromX==x) { break}
+        else moveTo('front', unit)
+        fromY = unit.attr('y') + 90
+        fromX = unit.attr('x') - 35
+        stepCount += 1;
+      }
+      return stepCount;
+  }
+
+  function endTurn () {
+    if (base.turn === 'player') changeTurn();
+  }
+
+  function availableSide (element) {
+    var dir = [['front', 1], ['back', 1], ['left', 1], ['right', 1]];
+    window.availableDirection = []
+    var x = element.attr('x') - 35
+    var y = element.attr('y') + 90
+
+    dir.forEach(function(d){
+      var side = getPosition(d[0], y, x)
+      if(fields[side['y']] === undefined || fields[side['y']][side['x']] === undefined) {
+       }else{
+          availableDirection.push(side)
+       }
+    })
+
+    return availableDirection;
+
+  }
+  window.e = endTurn;
+  window.a = availableSide
+  window.m = moveTo
+  availableSide(ene0)
+  availableSide(ene1)
+  availableSide(ene2)
 
   Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e) {
     if(e.button > 1) return;

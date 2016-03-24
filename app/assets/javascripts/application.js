@@ -13,5 +13,8 @@
 //= require jquery
 //= require jquery_ujs
 //= require turbolinks
+//= require crafty-min
+//= require main.map
+//= require tiledmapbuilder
+//= require create_mocks_module
 //= require fields
-//= require_tree .
